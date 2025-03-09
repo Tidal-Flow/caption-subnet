@@ -1,0 +1,9 @@
+numpy
+scipy
+torch
+transformers
+soundfile
+pydub
+bittensor
+openai-whisper
+pytest
