@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 setup(
     name='bittensor-subnet',
     version='0.1.0',
-    author='Your Name',
+    author='Mukku27',
     author_email='vemulapallimukesh@gmail.com',
     description='A Bittensor subnet for audio captioning and transcription evaluation.',
     packages=find_packages(where='src'),
@@ -25,5 +25,5 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.10',
 )
