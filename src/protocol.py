@@ -1,5 +1,5 @@
-from bittensor.utils.weight_utils import serialize_forward_response
 import base64
+import json
 
 class CaptionSegment:
     """
@@ -18,6 +18,23 @@ class CaptionSegment:
     def __str__(self):
         return f"[{self.start_time:.2f}-{self.end_time:.2f}] {self.text}"
 
+    def to_dict(self):
+        """Convert segment to dictionary for serialization."""
+        return {
+            "text": self.text,
+            "start_time": self.start_time,
+            "end_time": self.end_time
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        """Create segment from dictionary."""
+        return cls(
+            text=data["text"],
+            start_time=data["start_time"],
+            end_time=data["end_time"]
+        )
+
 
 class CaptionSynapse:
     """
@@ -31,23 +48,29 @@ class CaptionSynapse:
         self.metadata = metadata or {}
         self.transcription = None     # Will be filled by miners
 
-    def serialize(self):
+    def serialize(self) -> bytes:
         """Serializes the synapse data for network transmission."""
-        return {
+        data = {
             "audio_data": self.audio_data,
             "audio_id": self.audio_id,
             "metadata": self.metadata,
             "transcription": self.transcription if hasattr(self, "transcription") else None
         }
+        return json.dumps(data).encode('utf-8')
         
-    def deserialize(self, data):
+    @classmethod
+    def deserialize(cls, data: bytes):
         """Deserializes the synapse data after network transmission."""
-        if "audio_data" in data:
-            self.audio_data = data["audio_data"]
-        if "audio_id" in data:
-            self.audio_id = data["audio_id"]
-        if "metadata" in data:
-            self.metadata = data["metadata"]
+        if isinstance(data, bytes):
+            data = json.loads(data.decode('utf-8'))
+        elif isinstance(data, str):
+            data = json.loads(data)
+            
+        instance = cls(
+            audio_data=data.get("audio_data", ""),
+            audio_id=data.get("audio_id", None),
+            metadata=data.get("metadata", {})
+        )
         if "transcription" in data:
-            self.transcription = data["transcription"]
-        return self
+            instance.transcription = data["transcription"]
+        return instance
