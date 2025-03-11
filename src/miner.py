@@ -36,6 +36,19 @@ class CaptionMiner:
             choices=["tiny", "base", "small", "medium", "large"],
             help="Whisper model size to use for transcription"
         )
+        parser.add_argument(
+        "--subtensor.network",
+        type=str,
+        default="local",
+        help="Bittensor network to connect to (local/finney/test)"
+    )
+        parser.add_argument(
+        "--subtensor.chain_endpoint",
+        type=str,
+        default="ws://127.0.0.1:9944",
+        help="Chain endpoint for local deployment"
+    )
+    
         bt.subtensor.add_args(parser)
         bt.logging.add_args(parser)
         bt.wallet.add_args(parser)
