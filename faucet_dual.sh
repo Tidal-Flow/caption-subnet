@@ -8,7 +8,7 @@ CHAIN_ENDPOINT="ws://127.0.0.1:9944"
 # Function to extract the balance (after the arrow) from btcli wallet overview output.
 get_balance() {
     local wallet_name="$1"
-    btcli wallet overview --wallet.name "$wallet_name" --subtensor.chain_endpoint "$CHAIN_ENDPOINT" --no_prompt \
+    btcli wallet overview --wallet.name "$wallet_name" --subtensor.chain_endpoint "$CHAIN_ENDPOINT" \
     | grep 'Balance:' \
     | awk -F'➡' '{print $2}' \
     | awk '{print $1}' \
