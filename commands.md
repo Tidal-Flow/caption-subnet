@@ -10,4 +10,5 @@ or if the pm2 instance exists or is active you start it
 - pm2 restart 0
 - pm2 logs
 
-`python src/miner.py --netuid 3 --subtensor.chain_endpoint ws://127.0.0.1:9944 --wallet.name miner --wallet.hotkey default --logging.debug --axon.port 8091 --network local`
+
+`pm2 start python --name miner -- src/miner.py --netuid 3 --subtensor.chain_endpoint ws://127.0.0.1:9944 --wallet.name miner --wallet.hotkey default --logging.debug --axon.port 8091 --network local`
