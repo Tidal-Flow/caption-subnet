@@ -375,10 +375,8 @@ class STTValidator:
         # Filter out axons with invalid IP addresses
         valid_axons = []
         for axon in self.metagraph.axons:
-            if axon.ip == "0.0.0.0" or axon.port == 0:
-                bt.logging.warning(f"Skipping miner with invalid address: {axon.ip}:{axon.port} ({axon.hotkey[:10]}...)")
-                continue
-            valid_axons.append(axon)
+            
+          valid_axons.append(axon)
         
         if not valid_axons:
             bt.logging.warning("No miners with valid IP addresses available")
