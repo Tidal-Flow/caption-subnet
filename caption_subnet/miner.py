@@ -119,6 +119,16 @@ class STTMiner:
                 self.wallet.hotkey.ss58_address
             )
             bt.logging.info(f"Running miner on uid: {self.my_subnet_uid}")
+        
+        # Set external IP address for the axon
+        if self.config.axon.external_ip is None:
+            try:
+                self.config.axon.external_ip = bt.utils.networking.get_external_ip()
+                bt.logging.info(f"Set external IP to {self.config.axon.external_ip}")
+            except Exception as e:
+                bt.logging.warning(f"Failed to get external IP: {e}")
+                bt.logging.warning("Using 0.0.0.0 as a fallback, but this may cause connection issues")
+                self.config.axon.external_ip = "0.0.0.0"
 
     def setup_job_database(self):
         csv_path = self.config.miner.csv_path
@@ -132,8 +142,22 @@ class STTMiner:
             self.jobs_df = pd.DataFrame(columns=[
                 'job_id', 'job_status', 'job_accuracy', 'base64_audio', 
                 'transcript_miner', 'gender', 'created_at', 'normalized_text',
-                'language_miner', 'gender_miner', 'gender_confidence_miner'
-            ])
+                'language_miner', 'gender_miner', 'gender_confidence_miner',
+                'miner_hotkey'  # Ensure this is a string type
+            ], dtype={
+                'job_id': str,
+                'job_status': str,
+                'job_accuracy': float,
+                'base64_audio': str,
+                'transcript_miner': str,
+                'gender': str,
+                'created_at': str,
+                'normalized_text': str,
+                'language_miner': str,
+                'gender_miner': str,
+                'gender_confidence_miner': float,
+                'miner_hotkey': str  # Explicitly set as string type
+            })
             bt.logging.info("Created new job database")
             
         # Save the initial state
@@ -181,7 +205,8 @@ class STTMiner:
                 'normalized_text': None,  # Miners don't have ground truth
                 'language_miner': None,
                 'gender_miner': None,
-                'gender_confidence_miner': None
+                'gender_confidence_miner': None,
+                'miner_hotkey': self.wallet.hotkey.ss58_address
             }
             
             # Add to DataFrame
@@ -240,8 +265,7 @@ class STTMiner:
                 skip_special_tokens=True
             )[0]
             
-            # For this example, we'll use simple placeholders for language and gender detection
-            # In a real implementation, you would use dedicated models for these tasks
+            # implement later after the completion of captions 
             language = "en"  # Placeholder
             gender = "unknown"  # Placeholder
             gender_confidence = 0.5  # Placeholder
@@ -279,7 +303,7 @@ class STTMiner:
         
         # Start the axon server
         axon.start()
-        bt.logging.info(f"Axon server started on port {self.config.axon.port}")
+        bt.logging.info(f"Axon server started on port {self.config.axon.port} with external IP {self.config.axon.external_ip}")
         
         # Keep the miner running
         try:

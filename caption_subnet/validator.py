@@ -155,13 +155,27 @@ class STTValidator:
             self.jobs_df = pd.read_csv(csv_path)
             bt.logging.info(f"Loaded existing job database with {len(self.jobs_df)} entries")
         else:
-            # Create a new DataFrame with the required columns
+            # Create a new DataFrame with the required columns and explicit dtypes
             self.jobs_df = pd.DataFrame(columns=[
                 'job_id', 'job_status', 'job_accuracy', 'base64_audio', 
                 'transcript_miner', 'gender', 'created_at', 'normalized_text',
                 'language_miner', 'gender_miner', 'gender_confidence_miner',
-                'miner_hotkey', 'dataset_index'  # Added miner_hotkey column
-            ])
+                'miner_hotkey', 'dataset_index'
+            ], dtype={
+                'job_id': str,
+                'job_status': str,
+                'job_accuracy': float,
+                'base64_audio': str,
+                'transcript_miner': str,
+                'gender': str,
+                'created_at': str,
+                'normalized_text': str,
+                'language_miner': str,
+                'gender_miner': str,
+                'gender_confidence_miner': float,
+                'miner_hotkey': str,  # Explicitly set as string type
+                'dataset_index': 'Int64'  # Use pandas nullable integer type
+            })
             bt.logging.info("Created new job database")
             
             # Initialize with jobs from the dataset
@@ -346,6 +360,18 @@ class STTValidator:
             bt.logging.warning("No miners available to process jobs")
             return
         
+        # Filter out axons with invalid IP addresses
+        valid_axons = []
+        for axon in self.metagraph.axons:
+            if axon.ip == "0.0.0.0" or axon.port == 0:
+                bt.logging.warning(f"Skipping miner with invalid address: {axon.ip}:{axon.port} ({axon.hotkey[:10]}...)")
+                continue
+            valid_axons.append(axon)
+        
+        if not valid_axons:
+            bt.logging.warning("No miners with valid IP addresses available")
+            return
+        
         # Process each job individually to avoid the list issue
         for job in pending_jobs:
             try:
@@ -358,11 +384,11 @@ class STTValidator:
                 )
                 
                 # Select a random miner to process this job
-                miner_idx = random.randint(0, len(self.metagraph.axons) - 1)
-                axon = self.metagraph.axons[miner_idx]
+                miner_idx = random.randint(0, len(valid_axons) - 1)
+                axon = valid_axons[miner_idx]
                 miner_hotkey = axon.hotkey
                 
-                bt.logging.info(f"Sending job {job['job_id']} to miner {miner_hotkey[:10]}...")
+                bt.logging.info(f"Sending job {job['job_id']} to miner {miner_hotkey[:10]}... at {axon.ip}:{axon.port}")
                 
                 # Query a single miner with a single synapse
                 response = self.dendrite.query(
