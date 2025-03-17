@@ -25,6 +25,8 @@ class STTValidator:
         self.setup_logging()
         self.setup_bittensor_objects()
         self.setup_datasets()
+        
+       
         self.setup_job_database()
         
         # Validator state
@@ -37,8 +39,7 @@ class STTValidator:
         self.moving_avg_scores = [1.0] * len(self.metagraph.S)
         self.alpha = 0.1
         
-        # Job management
-        self.job_lock = threading.Lock()
+        # Job rotation threshold
         self.job_rotation_threshold = 2  # Replace jobs after this many completions
 
     def get_config(self):
