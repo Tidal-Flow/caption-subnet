@@ -343,9 +343,10 @@ class STTMiner:
         
         return synapse
 
-    # Add this to your validator code to debug
-    for i, axon in enumerate(self.metagraph.axons):
-        bt.logging.info(f"Axon {i}: {axon.ip}:{axon.port} - {axon.hotkey[:10]}...")
+    def debug_axons(self):
+        # Debug method to print axon information
+        for i, axon in enumerate(self.metagraph.axons):
+            bt.logging.info(f"Axon {i}: {axon.ip}:{axon.port} - {axon.hotkey[:10]}...")
 
 if __name__ == "__main__":
     miner = STTMiner()
