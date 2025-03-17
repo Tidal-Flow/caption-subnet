@@ -371,30 +371,46 @@ class STTValidator:
                     timeout=30  # Longer timeout for audio processing
                 )
                 
-                # Process the response
-                if response is None or hasattr(response, 'error') and response.error:
-                    error_msg = response.error if response and hasattr(response, 'error') else "No response"
-                    bt.logging.warning(f"Job {job['job_id']} failed: {error_msg}")
+                # Process the response - handle both list and direct response formats
+                if response is None:
+                    bt.logging.warning(f"Job {job['job_id']} failed: No response")
                     self.update_job_status(job['job_id'], 'failed', miner_hotkey=miner_hotkey)
-                else:
-                    bt.logging.info(f"Job {job['job_id']} completed successfully by miner {miner_hotkey[:10]}...")
+                    continue
                     
-                    # Extract response data
-                    miner_response = {
-                        'transcript': response.transcript,
-                        'language_detected': response.language_detected,
-                        'gender_detected': response.gender_detected,
-                        'gender_confidence': response.gender_confidence,
-                        'processing_time': response.processing_time
-                    }
+                # Check if response is a list (which seems to be happening)
+                if isinstance(response, list):
+                    if len(response) == 0:
+                        bt.logging.warning(f"Job {job['job_id']} failed: Empty response list")
+                        self.update_job_status(job['job_id'], 'failed', miner_hotkey=miner_hotkey)
+                        continue
+                    # Use the first item in the list
+                    response = response[0]
+                
+                # Check for error in response
+                if hasattr(response, 'error') and response.error:
+                    bt.logging.warning(f"Job {job['job_id']} failed: {response.error}")
+                    self.update_job_status(job['job_id'], 'failed', miner_hotkey=miner_hotkey)
+                    continue
                     
-                    # Update job status with miner's response
-                    self.update_job_status(job['job_id'], 'done', miner_response, miner_hotkey)
-                    
-                    # Log some info about the result
-                    bt.logging.info(f"Transcript: {response.transcript[:50]}...")
+                bt.logging.info(f"Job {job['job_id']} completed successfully by miner {miner_hotkey[:10]}...")
+                
+                # Extract response data
+                miner_response = {
+                    'transcript': response.transcript if hasattr(response, 'transcript') else None,
+                    'language_detected': response.language_detected if hasattr(response, 'language_detected') else None,
+                    'gender_detected': response.gender_detected if hasattr(response, 'gender_detected') else None,
+                    'gender_confidence': response.gender_confidence if hasattr(response, 'gender_confidence') else None,
+                    'processing_time': response.processing_time if hasattr(response, 'processing_time') else None
+                }
+                
+                # Update job status with miner's response
+                self.update_job_status(job['job_id'], 'done', miner_response, miner_hotkey)
+                
+                # Log some info about the result
+                if miner_response['transcript']:
+                    bt.logging.info(f"Transcript: {miner_response['transcript'][:50]}...")
                     if job['normalized_text']:
-                        wer = jiwer.wer(job['normalized_text'], response.transcript)
+                        wer = jiwer.wer(job['normalized_text'], miner_response['transcript'])
                         bt.logging.info(f"WER: {wer:.4f}")
                 
             except Exception as e:
