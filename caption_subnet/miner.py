@@ -257,7 +257,7 @@ class STTMiner:
                 skip_special_tokens=True
             )[0]
             
-            # implement later after the completion of captions 
+            # implement later after the completion of transcript functionality
             language = "en"  # Placeholder
             gender = "unknown"  # Placeholder
             gender_confidence = 0.5  # Placeholder
@@ -358,7 +358,8 @@ class STTMiner:
             synapse.error = str(e)
         
         return synapse
-
+    
+    
     def debug_axons(self):
         # Debug method to print axon information
         for i, axon in enumerate(self.metagraph.axons):
