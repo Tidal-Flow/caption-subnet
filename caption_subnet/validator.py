@@ -341,55 +341,65 @@ class STTValidator:
         
         bt.logging.info(f"Processing {len(pending_jobs)} jobs")
         
-        # Create synapse objects for each job
-        synapses = []
+        # Check if we have any miners to query
+        if len(self.metagraph.axons) == 0:
+            bt.logging.warning("No miners available to process jobs")
+            return
+        
+        # Process each job individually to avoid the list issue
         for job in pending_jobs:
-            synapse = STTSynapse(
-                job_id=job['job_id'],
-                base64_audio=job['base64_audio'],
-                audio_format='wav',
-                gender=job['gender'],
-                # Add a vpermit for authentication in a real implementation
-            )
-            synapses.append(synapse)
-        
-        # Query miners
-        responses = self.dendrite.query(
-            axons=self.metagraph.axons,
-            synapse=synapses,
-            timeout=30  # Longer timeout for audio processing
-        )
-        
-        # Process responses
-        for i, (job, response) in enumerate(zip(pending_jobs, responses)):
-            # Get the miner's hotkey that processed this job
-            axon_info = self.metagraph.axons[i % len(self.metagraph.axons)]
-            miner_hotkey = axon_info.hotkey
-            
-            if response is None or response.error:
-                error_msg = response.error if response else "No response"
-                bt.logging.warning(f"Job {job['job_id']} failed: {error_msg}")
-                self.update_job_status(job['job_id'], 'failed', miner_hotkey=miner_hotkey)
-            else:
-                bt.logging.info(f"Job {job['job_id']} completed successfully by miner {miner_hotkey[:10]}...")
+            try:
+                # Create synapse for this job
+                synapse = STTSynapse(
+                    job_id=job['job_id'],
+                    base64_audio=job['base64_audio'],
+                    audio_format='wav',
+                    gender=job['gender'],
+                )
                 
-                # Extract response data
-                miner_response = {
-                    'transcript': response.transcript,
-                    'language_detected': response.language_detected,
-                    'gender_detected': response.gender_detected,
-                    'gender_confidence': response.gender_confidence,
-                    'processing_time': response.processing_time
-                }
+                # Select a random miner to process this job
+                miner_idx = random.randint(0, len(self.metagraph.axons) - 1)
+                axon = self.metagraph.axons[miner_idx]
+                miner_hotkey = axon.hotkey
                 
-                # Update job status with miner's response
-                self.update_job_status(job['job_id'], 'done', miner_response, miner_hotkey)
+                bt.logging.info(f"Sending job {job['job_id']} to miner {miner_hotkey[:10]}...")
                 
-                # Log some info about the result
-                bt.logging.info(f"Transcript: {response.transcript[:50]}...")
-                if job['normalized_text']:
-                    wer = jiwer.wer(job['normalized_text'], response.transcript)
-                    bt.logging.info(f"WER: {wer:.4f}")
+                # Query a single miner with a single synapse
+                response = self.dendrite.query(
+                    axons=[axon],
+                    synapse=synapse,
+                    timeout=30  # Longer timeout for audio processing
+                )
+                
+                # Process the response
+                if response is None or hasattr(response, 'error') and response.error:
+                    error_msg = response.error if response and hasattr(response, 'error') else "No response"
+                    bt.logging.warning(f"Job {job['job_id']} failed: {error_msg}")
+                    self.update_job_status(job['job_id'], 'failed', miner_hotkey=miner_hotkey)
+                else:
+                    bt.logging.info(f"Job {job['job_id']} completed successfully by miner {miner_hotkey[:10]}...")
+                    
+                    # Extract response data
+                    miner_response = {
+                        'transcript': response.transcript,
+                        'language_detected': response.language_detected,
+                        'gender_detected': response.gender_detected,
+                        'gender_confidence': response.gender_confidence,
+                        'processing_time': response.processing_time
+                    }
+                    
+                    # Update job status with miner's response
+                    self.update_job_status(job['job_id'], 'done', miner_response, miner_hotkey)
+                    
+                    # Log some info about the result
+                    bt.logging.info(f"Transcript: {response.transcript[:50]}...")
+                    if job['normalized_text']:
+                        wer = jiwer.wer(job['normalized_text'], response.transcript)
+                        bt.logging.info(f"WER: {wer:.4f}")
+                
+            except Exception as e:
+                bt.logging.error(f"Error processing job {job['job_id']}: {e}")
+                traceback.print_exc()
 
     def update_weights(self):
         """Update weights on the Bittensor blockchain"""
