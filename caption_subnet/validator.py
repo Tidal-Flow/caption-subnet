@@ -23,6 +23,9 @@ class STTValidator:
     def __init__(self):
         self.config = self.get_config()
         self.setup_logging()
+
+        # Initialize job_lock BEFORE setup_job_database
+        self.job_lock = threading.Lock()
         self.setup_bittensor_objects()
         self.setup_datasets()
         
