@@ -120,15 +120,20 @@ class STTMiner:
             )
             bt.logging.info(f"Running miner on uid: {self.my_subnet_uid}")
         
-        # Set external IP address for the axon
+        # Set external IP address for the axon - improved for local networks
         if self.config.axon.external_ip is None:
-            try:
-                self.config.axon.external_ip = bt.utils.networking.get_external_ip()
-                bt.logging.info(f"Set external IP to {self.config.axon.external_ip}")
-            except Exception as e:
-                bt.logging.warning(f"Failed to get external IP: {e}")
-                bt.logging.warning("Using 0.0.0.0 as a fallback, but this may cause connection issues")
-                self.config.axon.external_ip = "0.0.0.0"
+            if self.config.subtensor.network == "local":
+                # Use localhost for local development
+                self.config.axon.external_ip = "127.0.0.1"
+                bt.logging.info(f"Local network detected, setting IP to 127.0.0.1")
+            else:
+                try:
+                    self.config.axon.external_ip = bt.utils.networking.get_external_ip()
+                    bt.logging.info(f"Set external IP to {self.config.axon.external_ip}")
+                except Exception as e:
+                    bt.logging.warning(f"Failed to get external IP: {e}")
+                    bt.logging.warning("Using 0.0.0.0 as a fallback, but this may cause connection issues")
+                    self.config.axon.external_ip = "0.0.0.0"
 
     def setup_job_database(self):
         csv_path = self.config.miner.csv_path

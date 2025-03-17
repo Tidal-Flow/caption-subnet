@@ -344,7 +344,19 @@ class STTValidator:
                 
             return scores
 
+    def debug_connection_info(self):
+        bt.logging.info("==================== DEBUG INFO ====================")
+        bt.logging.info(f"Network: {self.config.subtensor.network}")
+        bt.logging.info(f"Chain endpoint: {self.config.subtensor.chain_endpoint}")
+        bt.logging.info(f"Number of miners in metagraph: {len(self.metagraph.axons)}")
+        
+        for i, axon in enumerate(self.metagraph.axons):
+            bt.logging.info(f"Miner {i}: Hotkey={axon.hotkey[:10]}... IP={axon.ip}:{axon.port}")
+        
+        bt.logging.info("====================================================")
+
     def process_jobs(self, batch_size: int):
+        self.debug_connection_info()
         """Process a batch of jobs by sending them to miners"""
         # Get pending jobs
         pending_jobs = self.get_pending_jobs(batch_size)
@@ -492,6 +504,10 @@ class STTValidator:
     def run(self):
         """Main validator loop"""
         bt.logging.info("Starting validator loop")
+        
+        # Force initial metagraph sync
+        self.metagraph.sync(subtensor=self.subtensor)
+        bt.logging.info(f"Initial sync: Block: {self.metagraph.block.item()} | Miners: {len(self.metagraph.axons)}")
         
         step = 0
         while True:
