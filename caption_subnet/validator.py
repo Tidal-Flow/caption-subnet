@@ -152,7 +152,14 @@ class STTValidator:
         
         # Create or load the CSV file
         if os.path.exists(csv_path):
-            self.jobs_df = pd.read_csv(csv_path)
+            # Explicitly specify dtype when loading to ensure miner_hotkey is string
+            self.jobs_df = pd.read_csv(csv_path, dtype={
+                'miner_hotkey': str,  # Force string type for miner_hotkey
+                'job_id': str,
+                'job_status': str,
+                'job_accuracy': float,
+                'dataset_index': 'Int64'  # Use pandas nullable integer type
+            })
             bt.logging.info(f"Loaded existing job database with {len(self.jobs_df)} entries")
         else:
             # Create a new DataFrame with the required columns and explicit dtypes

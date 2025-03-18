@@ -319,12 +319,14 @@ class STTMiner:
             self.subtensor.serve_axon(
                 netuid=self.config.netuid,
                 axon=axon,
-                wait_for_inclusion=True
+                wait_for_inclusion=False  # Change to False for local testing to avoid waiting
             )
             bt.logging.info(f"Successfully registered axon with network")
         except Exception as e:
             bt.logging.error(f"Failed to register axon with network: {e}")
             traceback.print_exc()
+            bt.logging.info("Continuing despite registration error for local testing")
+            # Don't exit, continue with testing
 
         # Add a debug method to check our axon's registration
         self.debug_axons()
