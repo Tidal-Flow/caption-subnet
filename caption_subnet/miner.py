@@ -286,8 +286,8 @@ class STTMiner:
         
         # Create and start the axon server with explicit IP and port settings
         # Ensure we set these values explicitly
-        self.config.axon.external_ip = "127.0.0.1"  # Use 127.0.0.1 instead of 0.0.0.0
-        self.config.axon.external_port = self.config.axon.port  # Ensure port is set correctly
+        # self.config.axon.external_ip = "127.0.0.1"  # Use 127.0.0.1 instead of 0.0.0.0
+        # self.config.axon.external_port = self.config.axon.port  # Ensure port is set correctly
         
         axon = bt.axon(wallet=self.wallet, config=self.config)
         
@@ -303,19 +303,19 @@ class STTMiner:
         bt.logging.info(f"Axon server started on port {self.config.axon.port} with external IP {self.config.axon.external_ip}")
         
         # Register the axon with the network, with proper error handling
-        try:
-            bt.logging.info(f"Registering axon with network: port={self.config.axon.external_port}, ip={self.config.axon.external_ip}")
-            self.subtensor.serve_axon(
-                netuid=self.config.netuid,
-                axon=axon,
-                wait_for_inclusion=True  # Set to False for local testing to avoid waiting
-            )
-            bt.logging.info(f"Successfully registered axon with network")
-        except Exception as e:
-            bt.logging.error(f"Failed to register axon with network: {e}")
-            traceback.print_exc()
-            bt.logging.info("Continuing despite registration error for local testing")
-            # Don't exit, continue with testing
+        # try:
+        #     bt.logging.info(f"Registering axon with network: port={self.config.axon.external_port}, ip={self.config.axon.external_ip}")
+        #     self.subtensor.serve_axon(
+        #         netuid=self.config.netuid,
+        #         axon=axon,
+        #         wait_for_inclusion=True  # Set to False for local testing to avoid waiting
+        #     )
+        #     bt.logging.info(f"Successfully registered axon with network")
+        # except Exception as e:
+        #     bt.logging.error(f"Failed to register axon with network: {e}")
+        #     traceback.print_exc()
+        #     bt.logging.info("Continuing despite registration error for local testing")
+        #     # Don't exit, continue with testing
         
         # Get updated metagraph to verify registration
         self.metagraph.sync()
