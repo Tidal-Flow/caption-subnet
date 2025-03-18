@@ -356,8 +356,9 @@ class STTValidator:
         bt.logging.info("====================================================")
 
     def process_jobs(self, batch_size: int):
-        self.debug_connection_info()
         """Process a batch of jobs by sending them to miners"""
+        self.debug_connection_info()  # Debug connection info
+        
         # Get pending jobs
         pending_jobs = self.get_pending_jobs(batch_size)
         
@@ -372,15 +373,9 @@ class STTValidator:
             bt.logging.warning("No miners available to process jobs")
             return
         
-        # Filter out axons with invalid IP addresses
-        valid_axons = []
-        for axon in self.metagraph.axons:
-            
-          valid_axons.append(axon)
-        
-        if not valid_axons:
-            bt.logging.warning("No miners with valid IP addresses available")
-            return
+        # Use all axons regardless of IP address
+        valid_axons = self.metagraph.axons
+        bt.logging.info(f"Using all {len(valid_axons)} miners, ignoring invalid IP addresses")
         
         # Process each job individually to avoid the list issue
         for job in pending_jobs:
@@ -399,6 +394,9 @@ class STTValidator:
                 miner_hotkey = axon.hotkey
                 
                 bt.logging.info(f"Sending job {job['job_id']} to miner {miner_hotkey[:10]}... at {axon.ip}:{axon.port}")
+                
+                # Added debug info about the axon
+                bt.logging.info(f"Axon details: {axon}")
                 
                 # Query a single miner with a single synapse
                 response = self.dendrite.query(
