@@ -308,7 +308,7 @@ class STTMiner:
             self.subtensor.serve_axon(
                 netuid=self.config.netuid,
                 axon=axon,
-                wait_for_inclusion=False  # Set to False for local testing to avoid waiting
+                wait_for_inclusion=True  # Set to False for local testing to avoid waiting
             )
             bt.logging.info(f"Successfully registered axon with network")
         except Exception as e:
