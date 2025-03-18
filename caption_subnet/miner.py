@@ -15,7 +15,7 @@ import threading
 import torch
 import asyncio
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
-import random
+
 
 from protocol import STTSynapse
 
@@ -121,22 +121,7 @@ class STTMiner:
             )
             bt.logging.info(f"Running miner on uid: {self.my_subnet_uid}")
         
-        # Set external IP address for the axon
-        if not hasattr(self.config.axon, 'external_ip') or self.config.axon.external_ip is None:
-            # For local testing, force to localhost
-            if self.config.subtensor.network == "local":
-                self.config.axon.external_ip = "127.0.0.1"
-                bt.logging.info(f"Local network detected, setting IP to 127.0.0.1")
-            else:
-                try:
-                    external_ip = bt.utils.networking.get_external_ip()
-                    self.config.axon.external_ip = external_ip
-                    bt.logging.info(f"Set external IP to {external_ip}")
-                except Exception as e:
-                    bt.logging.warning(f"Failed to get external IP: {e}")
-                    # Use local IP as fallback for testing
-                    self.config.axon.external_ip = "127.0.0.1"
-                    bt.logging.info(f"Using fallback IP: 127.0.0.1")
+        
 
     def setup_job_database(self):
         csv_path = self.config.miner.csv_path
@@ -313,22 +298,7 @@ class STTMiner:
         axon.start()
         bt.logging.info(f"Axon server started on port {self.config.axon.port} with external IP {self.config.axon.external_ip}")
         
-        # Register the axon with the network
-        try:
-            bt.logging.info(f"Registering axon with network: port={self.config.axon.port}, ip={self.config.axon.external_ip}")
-            self.subtensor.serve_axon(
-                netuid=self.config.netuid,
-                axon=axon,
-                wait_for_inclusion=True 
-            )
-            bt.logging.info(f"Successfully registered axon with network")
-        except Exception as e:
-            bt.logging.error(f"Failed to register axon with network: {e}")
-            traceback.print_exc()
-            
-
-        # Add a debug method to check our axon's registration
-        self.debug_axons()
+        
         
         # Keep the miner running
         try:
@@ -337,9 +307,7 @@ class STTMiner:
                 self.metagraph.sync()
                 bt.logging.info(f"Block: {self.metagraph.block.item()} | Miners: {len(self.metagraph.axons)}")
                 
-                # Debug axon registration occasionally
-                if random.random() < 0.1:  # 10% chance each loop
-                    self.debug_axons()
+                
                     
                 # Sleep to prevent overwhelming the network
                 time.sleep(60)
